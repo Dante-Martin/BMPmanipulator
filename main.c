@@ -12,14 +12,16 @@ typedef struct
     unsigned int tamArchivo;
     unsigned int tamEncabezado;    // El tama�o del encabezado no siempre coincide con el comienzo de la imagen
     unsigned int comienzoImagen;   // Por eso dejo espacio para ambas cosas
+    unsigned int comprimido;
     unsigned int ancho;
     unsigned int alto;
     unsigned short profundidad;
 }t_metadata;
 
 //t_pixel Fgris(t_pixel);
-t_pixel IncrementoAzul(t_pixel);
-void rotar(t_metadata );
+//t_pixel IncrementoAzul(t_pixel);
+void rotarIzq(int , int , t_pixel , FILE *file, FILE *file2);
+//void rotarDer(int , int , t_pixel , FILE *file, FILE *file2);
 
 int main(int argc, char* argv[])// argc= numero de argumentos pasados. argv=  array de punteros a cadenas de caracteres que representan los argumentos pasados al programa desde la l�nea de comandos.
 {
@@ -27,8 +29,6 @@ int main(int argc, char* argv[])// argc= numero de argumentos pasados. argv=  ar
     t_metadata metadata;
     int alto;
     int ancho;
-    int resultadoPixel;
-    int resultadoMeta;
     char elByte;
     int puntero=0;
     //int intensidadAzul;
@@ -37,10 +37,17 @@ int main(int argc, char* argv[])// argc= numero de argumentos pasados. argv=  ar
     char ruta[] = "unlam.bmp";
 
     FILE *file= fopen(ruta,"rb");
-    FILE* file2 = fopen("modificacion.bmp", "wb");
+
 
     if(file==NULL){
         printf("El archivo no se pudo cargar \n");
+        exit(1);
+    }
+
+    FILE* file2 = fopen("modificacion.bmp", "wb");
+
+    if(file2==NULL){
+        printf("El archivo 2 no se pudo cargar \n");
         exit(1);
     }
 
@@ -59,6 +66,10 @@ int main(int argc, char* argv[])// argc= numero de argumentos pasados. argv=  ar
     printf("Comienza por el %d \n",metadata.comienzoImagen);
     fwrite(&metadata.comienzoImagen,sizeof(metadata.comienzoImagen), 1, file2);
 
+
+    fseek(file,30,SEEK_SET);
+    fread(&metadata.comprimido,sizeof(metadata.comprimido),1,file);
+     printf("Compresion= %i \n",metadata.comprimido);
 
 
     fseek(file,18,SEEK_SET);
@@ -100,41 +111,13 @@ int main(int argc, char* argv[])// argc= numero de argumentos pasados. argv=  ar
         fseek(file2,puntero,SEEK_SET);
         }
 
-         fseek(file,22,SEEK_SET);
-    fread(&metadata.alto,sizeof(metadata.alto),1,file);
-    alto=metadata.alto;
-
-    fseek(file,18,SEEK_SET);
-    fread(&metadata.ancho,sizeof(metadata.ancho),1,file);
-    ancho=metadata.ancho;
-    printf("El ancho de los pixeles es de %i px\n",metadata.ancho);
-
-    fseek(file2,18,SEEK_SET);
-    fwrite(&metadata.alto,sizeof(metadata.alto), 1, file2);
-    fwrite(&metadata.ancho,sizeof(metadata.ancho), 1, file2);
-
-
 
     fseek(file2,54,SEEK_SET);
-    for (int i = 0; i < ancho; i++)
-    {
-        for (int j = 0; j < alto; j++)
-        {
-
-            fseek(file,(sizeof(pixel.pixel)*(j*ancho+i))+54+1,SEEK_SET);
-            fread(&pixel.pixel,sizeof(pixel.pixel),1,file);
-            fwrite(&pixel.pixel,sizeof(pixel.pixel),1,file2);
-            puntero=puntero+sizeof(pixel.pixel);
-        }
-
-    }
-printf("puntero: %d \n tamaño de archivo %d",&puntero,metadata.tamArchivo);
-
-
+    fseek(file,54,SEEK_SET);
 while(puntero<=metadata.tamArchivo){//colores
       fread(&pixel.pixel,sizeof(pixel.pixel),1,file);
 
-        pixel=IncrementoAzul(pixel);
+        //pixel=IncrementoAzul(pixel);
 
         //pixel = Fgris(pixel);
 
@@ -145,15 +128,64 @@ while(puntero<=metadata.tamArchivo){//colores
        fseek(file2,puntero,SEEK_SET);
         }
 
+    fseek(file,22,SEEK_SET);
+    fread(&metadata.alto,sizeof(metadata.alto),1,file);
+    alto=metadata.alto;
 
-    fclose(file2);
+    fseek(file,18,SEEK_SET);
+    fread(&metadata.ancho,sizeof(metadata.ancho),1,file);
+    ancho=metadata.ancho;
+    printf("El ancho de los pixeles es de %i px\n",metadata.ancho);
+
+   fseek(file2,18,SEEK_SET);
+   fwrite(&metadata.alto,sizeof(metadata.alto), 1, file2);
+   fwrite(&metadata.ancho,sizeof(metadata.ancho), 1, file2);
+
+    //rotarDer(alto,ancho,pixel,file,file2);
+    rotarIzq(alto,ancho,pixel,file,file2);
+
     fclose(file);
+    fclose(file2);
 
     return (argc, argv);
+
 }
 
+void rotarIzq(int alto, int ancho, t_pixel pixel, FILE *file, FILE *file2){
+
+fseek(file2,54,SEEK_SET);
+
+    for (int i = 0; i < ancho; i++)
+    {
+        for (int j = alto-1; j >= 0 ; j--)
+        {
+
+            fseek(file,(sizeof(pixel.pixel)*(j*ancho+i))+54,SEEK_SET);
+            fread(&pixel.pixel,sizeof(pixel.pixel),1,file);
+            fwrite(&pixel.pixel,sizeof(pixel.pixel),1,file2);
+
+        }
+
+    }
 
 
+}
+/*
+void rotarDer(int alto, int ancho, t_pixel pixel, FILE *file, FILE *file2){
+    fseek(file2,54,SEEK_SET);
+    for (int i = ancho -1  ; i >= 0 ;  i--) {
+        for (int j = 0; j < alto; j++) {
+
+           fseek(file,(sizeof(pixel.pixel) * (j*ancho+i))+54,SEEK_SET);
+
+            fread(&pixel.pixel,sizeof(pixel.pixel),1,file);
+
+            fwrite(&pixel.pixel, sizeof(pixel.pixel), 1, file2);
+
+        }
+    }
+}
+*/
 /*
 t_pixel Fgris(t_pixel cambiar)
 {
@@ -267,8 +299,86 @@ t_pixel contrasteAumenta(t_pixel cambiar)
 t_pixel contrasteReduce(t_pixel cambiar)
 {
 
+t_pixel contrasteReduce(t_pixel cambiar)
+{
 
-*/
+    t_pixel ret;
+    unsigned char gris;
+    float multiplicador;
+
+    unsigned int aux;
+
+    gris = (cambiar.pixel[2] + cambiar.pixel[1] + cambiar.pixel[0]) / 3;
+
+    multiplicador = 125;
+    // if (gris <= 30){multiplicador=75;}
+    // if (gris > 30){multiplicador=88;}
+    // if (gris > 60){multiplicador=95;}
+    // if (gris > 90){multiplicador=98;}
+    // if (gris > 120){multiplicador=100;}
+    // if (gris > 150){multiplicador=102;}
+    // if (gris > 180){multiplicador=105;}
+    // if (gris > 210){multiplicador=112;}
+    // if (gris > 240){multiplicador=125;}
+
+    // if (gris <= 30){multiplicador=75;}
+    // if (gris > 30){multiplicador=78;}
+    // if (gris > 60){multiplicador=82;}
+    // if (gris > 90){multiplicador=90;}
+    // if (gris > 120){multiplicador=100;}
+    // if (gris > 150){multiplicador=110;}
+    // if (gris > 180){multiplicador=118;}
+    // if (gris > 210){multiplicador=122;}
+    // if (gris > 240){multiplicador=125;}
+
+    if (gris <= 30)    {        multiplicador = 125;    }
+    if (gris > 30)    {        multiplicador = 120;    }
+    if (gris > 60)    {        multiplicador = 110;    }
+    if (gris > 90)    {        multiplicador = 105;    }
+    if (gris > 120)    {        multiplicador = 100;    }
+    if (gris > 150)    {        multiplicador = 95;    }
+    if (gris > 180)    {        multiplicador = 90;    }
+    if (gris > 210)    {        multiplicador = 80;    }
+    if (gris > 240)    {        multiplicador = 75;    }
+
+
+    //if (gris <= 30)    {        multiplicador = 75;    }
+    //if (gris > 30)    {        multiplicador = 90;    }
+    //if (gris > 60)    {        multiplicador = 95;    }
+    //if (gris > 90)    {        multiplicador = 95;    }
+    //if (gris > 120)    {        multiplicador = 100;    }
+    //if (gris > 150)    {        multiplicador = 105;    }
+   //if (gris > 180)    {        multiplicador = 105;    }
+    //if (gris > 210)    {        multiplicador = 110;    }
+   // if (gris > 240)    {        multiplicador = 125;    }
+    aux = (multiplicador / 100) * cambiar.pixel[0];
+    if (aux > 255)
+    {
+        aux = 255;
+    }
+    ret.pixel[0] = aux;
+
+    //  printf("%02X-%02X-%02X: %02X  %02X   %f \n",cambiar.pixel[0],cambiar.pixel[1],cambiar.pixel[2],(cambiar.pixel[2]+cambiar.pixel[1]+cambiar.pixel[0])/3,gris,multiplicador);
+
+    // if (multiplicador/100 != 1){ printf("%f  %f  %02X  %02X\n",multiplicador/100,(multiplicador/100)  * cambiar.pixel[0],cambiar.pixel[0],ret.pixel[0]);}
+
+    aux = multiplicador / 100 * cambiar.pixel[1];
+    if (aux > 255)
+    {
+        aux = 255;
+    }
+    ret.pixel[1] = aux;
+
+    aux = multiplicador / 100 * cambiar.pixel[2];
+    if (aux > 255)
+    {
+        aux = 255;
+    }
+    ret.pixel[2] = aux;
+
+    return ret;
+}
+
 
 t_pixel IncrementoAzul (t_pixel cambio){
 
@@ -286,4 +396,4 @@ t_pixel IncrementoAzul (t_pixel cambio){
 
     return pixel;
 }
-
+*/
