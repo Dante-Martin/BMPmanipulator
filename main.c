@@ -1,4 +1,4 @@
-#include "funciones_estudiante.h"
+#include "funciones_estudiante.c"
 
 int main(int argc, char *argv[])
 {

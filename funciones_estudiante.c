@@ -37,6 +37,10 @@ void Recortar(int alto, int ancho, t_pixel pixel, FILE *file, FILE *file2);
 void BMPmanipuleitor(int argc, char* argv[]){
     for(int i=0; i<argc; i++)
     {
+        if(strcmp(argv[i],"--borronear")==0)
+        {
+            Borronear();
+        }
         if(strcmp(argv[i],"--tonalidad-azul")==0)
         {
             TonalidadAzul(argc, argv);
@@ -82,6 +86,165 @@ void BMPmanipuleitor(int argc, char* argv[]){
             Comodin(argc, argv);
         }
     }
+}
+void Borronear(){
+
+    t_pixel pixel;
+    t_metadata metadata;
+    char elByte;
+    int puntero=0;
+
+    FILE* ImagenDeEntrada = fopen("unlam.bmp", "rb");
+    FILE* ImagenDeSalida = fopen("Borroneado.bmp", "wb");
+
+    if(ImagenDeEntrada==NULL){
+        printf("El archivo no se pudo cargar \n");
+        exit(1);
+    }
+    if(ImagenDeSalida==NULL){
+        printf("El archivo no se pudo cargar \n");
+        exit(1);
+    }
+
+
+
+    fseek(ImagenDeSalida,0,SEEK_SET);
+    fseek(ImagenDeEntrada,0,SEEK_SET);
+    while(puntero<54){
+
+        fread(&elByte,sizeof(elByte),1,ImagenDeEntrada);
+        fwrite(&elByte,sizeof(elByte),1,ImagenDeSalida);
+        puntero++;
+        fseek(ImagenDeEntrada,puntero,SEEK_SET);
+        fseek(ImagenDeSalida,puntero,SEEK_SET);
+        }
+    fseek(ImagenDeEntrada,2,SEEK_SET);
+    fread(&metadata.tamArchivo, sizeof(metadata.tamArchivo), 1, ImagenDeEntrada);
+
+    fseek(ImagenDeEntrada,22,SEEK_SET);
+    fread(&metadata.alto,sizeof(metadata.alto),1,ImagenDeEntrada);
+
+    fseek(ImagenDeEntrada,18,SEEK_SET);
+    fread(&metadata.ancho,sizeof(metadata.ancho),1,ImagenDeEntrada);
+
+    unsigned char matrizbmp [metadata.alto][metadata.ancho*3];
+    unsigned char matrizbmpPixelada [metadata.alto][metadata.ancho*3];
+    unsigned char pixelito;
+    unsigned char matRoja[metadata.alto][metadata.ancho];
+    unsigned char matAzul[metadata.alto][metadata.ancho];
+    unsigned char matVerde[metadata.alto][metadata.ancho];
+    int secuencia=0;
+    unsigned char promedio;
+
+/* ANDA
+    fseek(ImagenDeSalida,54,SEEK_SET);
+
+   for (int i = 0   ; i < (metadata.alto) ;  i++) {
+        for (int j = 0; j < (metadata.ancho*3); j++) {
+
+           fseek(ImagenDeEntrada,(sizeof(pixelito) * (i*metadata.ancho*3+j))+54,SEEK_SET);
+
+            fread(&pixelito,sizeof(pixelito),1,ImagenDeEntrada);
+
+            fwrite(&pixelito, sizeof(pixelito), 1, ImagenDeSalida);
+
+        }
+    }
+    */
+    fseek(ImagenDeSalida,54,SEEK_SET);
+
+    for (int i = 0   ; i < (metadata.alto) ;  i++) {
+        for (int j = 0; j < (metadata.ancho*3); j++) {
+
+           fseek(ImagenDeEntrada,(sizeof(pixelito) * (i*metadata.ancho*3+j))+54,SEEK_SET);
+
+            fread(&pixelito,sizeof(pixelito),1,ImagenDeEntrada);
+
+            //fwrite(&pixelito, sizeof(pixelito), 1, ImagenDeSalida);
+            matrizbmp [i][j]=pixelito;
+            matrizbmpPixelada[i][j]=pixelito;
+
+            if(secuencia==0){
+                matAzul[i][j/3]=pixelito;
+            }
+            if(secuencia==1){
+                matVerde[i][j/3]=pixelito;
+            }
+            if(secuencia==2){
+                matRoja[i][j/3]=pixelito;
+            }
+            secuencia++;
+            if(secuencia==3)
+                secuencia=0;
+        }
+    }
+
+//Pixelar la imagen
+
+    for (int i = 1   ; i < (metadata.alto-1) ;  i++) {
+        for (int j = 1; j < (metadata.ancho -1 ); j++) {
+                promedio= (matRoja[i][j]+matRoja[i-1][j]+matRoja[i+1][j]+matRoja[i][j+1]+matRoja[i][j-1])/5;
+               // promedio = promedio/9;
+               matrizbmpPixelada[i][j*3+2]=promedio;
+        }
+    }
+
+    for (int i = 1   ; i < (metadata.alto-1) ;  i++) {
+        for (int j = 1; j < (metadata.ancho -1 ); j++) {
+                promedio= (matVerde[i][j]+matVerde[i-1][j]+matVerde[i+1][j]+matVerde[i][j+1]+matVerde[i][j-1])/5;
+                matrizbmpPixelada[i][j*3+1]=promedio;
+        }
+    }
+
+    for (int i = 1   ; i < (metadata.alto-1) ;  i++) {
+        for (int j = 1; j < (metadata.ancho -1 ); j++) {
+                promedio= (matAzul[i][j]+matAzul[i-1][j]+matAzul[i+1][j]+matAzul[i][j+1]+matAzul[i][j-1])/5;
+                matrizbmpPixelada[i][j*3]=promedio;
+        }
+    }
+ /*
+// Se arma la matriz pixelada
+    secuencia=0;
+     for (int i = 0   ; i < (metadata.alto) ;  i++) {
+        for (int j = 0; j < (metadata.ancho*3); j++) {
+
+
+            if(secuencia==0){
+                 pixelito=matAzul[i][j/3];
+            }
+            if(secuencia==1){
+                 pixelito=matVerde[i][j/3];
+            }
+           if(secuencia==2){
+                pixelito=matRoja[i][j/3];
+            }
+            secuencia++;
+            if(secuencia==3)
+                secuencia=0;
+
+            matrizbmpPixelada[i][j]=pixelito;
+        }
+
+    }
+    */
+//Se guarda la nueva matriz pixelada en la imagen de salida
+    for (int i = 0   ; i < (metadata.alto) ;  i++) {
+        for (int j = 0; j < (metadata.ancho*3); j++) {
+
+            pixelito = matrizbmpPixelada [i][j];
+
+            fwrite(&pixelito, sizeof(pixelito), 1, ImagenDeSalida);
+
+
+        }
+    }
+
+
+
+
+    fclose(ImagenDeSalida);
+    fclose(ImagenDeEntrada);
+
 }
 void TonalidadAzul(int argc, char *argv[]){
     t_pixel pixel;

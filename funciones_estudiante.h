@@ -19,5 +19,6 @@ void RotarDerecha(int argc, char* argv[]);
 void RotarIzquierda(int argc, char* argv[]);
 void RecortarImagen(int argc, char* argv[]);
 void Comodin(int argc, char* argv[]);
+void Borronear();
 
 #endif // FUNCIONES_ESTUDIANTE_H_INCLUDED
