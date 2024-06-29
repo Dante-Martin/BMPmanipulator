@@ -1,5 +1,5 @@
 /*
-    Integrantes del grupo. En caso de ser un grupo de dos integrantes, no completar el último campo.
+    Integrantes del grupo. En caso de ser un grupo de dos integrantes, no completar el Ãºltimo campo.
     Si alguno de los integrantes del grupo dejara la materia, completar de todos modos sus datos, aclarando que no entrega.
     -----------------
     Apellido: Clara
@@ -12,17 +12,17 @@
     DNI: 41926845
     Entrega: Si
     -----------------
-    (Sólo para grupos de tres integrantes)
+    (SÃ³lo para grupos de tres integrantes)
     Apellido:
     Nombre:
     DNI:
     Entrega:
     -----------------
 
-    Comentarios (opcionales) que deseen hacer al docente sobre el TP: El trabajo práctico estuvo bueno, se nos hizo bastante complicado de hacer,
+    Comentarios (opcionales) que deseen hacer al docente sobre el TP: El trabajo prÃ¡ctico estuvo bueno, se nos hizo bastante complicado de hacer,
     teniendo en cuenta que venimos de la materia anterior realizarlo fue bastante complicado, seguramente se puedan mejorar y agilizar muchos
     procesos, pero nos priorizamos en cumplir el objetivo. Sin embargo, valoramos que a pesar del esfuerzo  y complicaciones aprendimos muchas cosas
-    nuevas e interesantes, sobre todo, la manipulación de imágenes bmp :).
+    nuevas e interesantes, sobre todo, la manipulaciÃ³n de imÃ¡genes bmp :).
     Por otro lado, tuvimos un problema con la foto unlam.bmp y para la funcion recortar y rotar, debimos utilizar la aplicacion GIMP y guardar la foto
     nuevamente como un archivo .bmp de 24 bits, es probable que haya algun error en el archivo tal vez que no nos permitia que funcionen
     correctamente dichas funciones.
@@ -538,7 +538,7 @@ void RotarDerecha(int argc, char* argv[]){
     int ancho=metadata.ancho;
 
     fseek(ImagenDeSalida,18,SEEK_SET);
-    fwrite(&metadata.alto,sizeof(metadata.alto), 1, ImagenDeSalida);
+    fwrite(&metadata.alto,sizeof(metadata.alto), 1, ImagenDeSalida);// nuevo alto de la imagen salida
     fwrite(&metadata.ancho,sizeof(metadata.ancho), 1, ImagenDeSalida);
 
     rotarDer(alto, ancho, pixel, ImagenDeEntrada, ImagenDeSalida);
@@ -945,11 +945,11 @@ void rotarDer(int alto, int ancho, t_pixel pixel, FILE *file, FILE *file2){
     for (int i = ancho -1  ; i >= 0 ;  i--) {
         for (int j = 0; j < alto; j++) {
 
-           fseek(file,(sizeof(pixel.pixel) * (j*ancho+i))+54,SEEK_SET);
+           fseek(file,(sizeof(pixel.pixel) * (j*ancho+i))+54,SEEK_SET);//espejo de la imagen
 
             fread(&pixel.pixel,sizeof(pixel.pixel),1,file);
 
-            fwrite(&pixel.pixel, sizeof(pixel.pixel), 1, file2);
+            fwrite(&pixel.pixel, sizeof(plixel.pixe), 1, file2);
 
         }
     }
